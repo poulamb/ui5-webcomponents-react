@@ -9,6 +9,15 @@ import PATHS from '../../../config/paths.js';
 import fs from 'fs';
 import TurndownService from 'turndown';
 import { getTypeScriptTypeForProperty } from './web-components-generator/typescriptHelper.mjs';
+import Handlebars from 'handlebars';
+
+const TEMPLATES = {
+  Test: Handlebars.compile(
+    fs
+      .readFileSync(path.resolve(PATHS.packages, 'main', 'scripts', 'web-components-generator', 'WebComponentTest.hbs'))
+      .toString()
+  )
+};
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -364,25 +373,6 @@ const createWebComponentWrapper = (
   );
 };
 
-const createWebComponentTest = (name) => {
-  return prettier.format(
-    `
-    import { render } from '@shared/tests';
-    import { ${name} } from '@ui5/webcomponents-react/lib/${name}';
-    import React from 'react';
-
-    describe('${name}', () => {
-      test('Basic Test (generated)', () => {
-        const { asFragment } = render(<${name} />);
-        expect(asFragment()).toMatchSnapshot();
-      });
-    });
-
-    `,
-    prettierConfig
-  );
-};
-
 const createWebComponentDemo = (componentSpec, componentProps, description) => {
   const componentName = componentSpec.module;
   const enumImports = [];
@@ -723,7 +713,7 @@ resolvedWebComponents.forEach((componentSpec) => {
 
     // create test
     if (!fs.existsSync(path.join(webComponentFolderPath, `${componentSpec.module}.test.tsx`))) {
-      const webComponentTest = createWebComponentTest(componentSpec.module);
+      const webComponentTest = prettier.format(TEMPLATES.Test({ name: componentSpec.module }), prettierConfig);
       fs.writeFileSync(path.join(webComponentFolderPath, `${componentSpec.module}.test.tsx`), webComponentTest);
     }
 
