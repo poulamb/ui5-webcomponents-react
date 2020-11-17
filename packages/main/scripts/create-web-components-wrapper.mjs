@@ -16,6 +16,11 @@ const TEMPLATES = {
     fs
       .readFileSync(path.resolve(PATHS.packages, 'main', 'scripts', 'web-components-generator', 'WebComponentTest.hbs'))
       .toString()
+  ),
+  Lib: Handlebars.compile(
+    fs
+      .readFileSync(path.resolve(PATHS.packages, 'main', 'scripts', 'web-components-generator', 'WebComponentLib.hbs'))
+      .toString()
   )
 };
 
@@ -700,15 +705,7 @@ resolvedWebComponents.forEach((componentSpec) => {
     fs.writeFileSync(path.join(webComponentFolderPath, 'index.tsx'), webComponentWrapper);
 
     // create lib export
-    const libContent = prettier.format(
-      `
-    import { ${componentSpec.module} } from '../webComponents/${componentSpec.module}';
-    import type { ${componentSpec.module}PropTypes } from '../webComponents/${componentSpec.module}';
-
-    export { ${componentSpec.module} };
-    export type { ${componentSpec.module}PropTypes };`,
-      prettierConfig
-    );
+    const libContent = prettier.format(TEMPLATES.Lib({ name: componentSpec.module }), prettierConfig);
     fs.writeFileSync(path.join(LIB_DIR, `${componentSpec.module}.ts`), libContent);
 
     // create test
